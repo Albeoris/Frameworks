@@ -7,6 +7,49 @@ using Albeoris.Games.FF8.FlArchives.Abstractions;
 
 namespace Albeoris.Games.FF8.FlArchives;
 
+/// <summary>
+/// A three-file archive format used in Final Fantasy VIII.
+/// </summary>
+/// <remarks>
+/// Each archive is composed of three files that must share the same base name:
+/// <list type="bullet">
+///   <item>
+///     <term>.fl — Listing file</term>
+///     <description>
+///       ASCII text; one entry per line. Each line is the full internal path of the stored file,
+///       prefixed by <see cref="InternalPathPrefix"/> (default: <c>c:\ff8\data\</c>).
+///       Lines may use either LF or CRLF line endings.
+///     </description>
+///   </item>
+///   <item>
+///     <term>.fi — Metrics (index) file</term>
+///     <description>
+///       Binary; no file header. Contains one 12-byte record per entry, in the same order as the
+///       listing file. Record layout (little-endian):
+///       <c>[UInt32 uncompressedSize][UInt32 contentOffset][Int32 compressionMethod]</c>.
+///       <see cref="FlCompressionMethod"/> values: 0 = None, 1 = LZS, 2 = LZ4.
+///       The entry count is derived from <c>fileSize / 12</c>.
+///     </description>
+///   </item>
+///   <item>
+///     <term>.fs — Content file</term>
+///     <description>
+///       Binary; raw file data at the offsets recorded in the metrics file.
+///       Content layout depends on <see cref="FlCompressionMethod"/>:
+///       <list type="bullet">
+///         <item><term>None</term><description>Raw bytes, <c>uncompressedSize</c> bytes at <c>contentOffset</c>.</description></item>
+///         <item><term>LZS</term><description><c>[UInt32 compressedSize][compressed bytes]</c> at <c>contentOffset</c>.</description></item>
+///         <item><term>LZ4</term><description><c>[UInt32 totalSize = compressedSize + 8][UInt32 magic 0x5F4C5A34][UInt32 uncompressedSize][compressed bytes]</c> at <c>contentOffset</c>.</description></item>
+///       </list>
+///       Zero-size entries (<c>uncompressedSize == 0</c>) have a meaningless <c>contentOffset</c> and
+///       occupy no space in the content file.
+///     </description>
+///   </item>
+/// </list>
+/// Write operations always store content as <see cref="FlCompressionMethod.None"/>. When the new
+/// content fits in the existing slot, it is written in-place. Otherwise the content is appended to
+/// the end of the <c>.fs</c> file, leaving the old slot as unused space.
+/// </remarks>
 public sealed partial class FlArchive
 {
     public static Encoding PathEncoding { get; set; } = Encoding.ASCII;
@@ -15,7 +58,7 @@ public sealed partial class FlArchive
     public static Int32 MovingBufferSize { get; set; } = 64 * 1024 * 1024;
 
     public static IFlArchive OpenForRead(String archivePath) => Open(archivePath, File.OpenRead, leaveOpen: false);
-    public static IFlArchive OpenForWrite(String archivePath) => Open(archivePath, File.OpenWrite, leaveOpen: false);
+    public static IFlArchive OpenForWrite(String archivePath) => Open(archivePath, f => new FileStream(f, FileMode.Open, FileAccess.ReadWrite), leaveOpen: false);
     public static IFlArchive Create(String archivePath) => Open(archivePath, File.Create, leaveOpen: false);
 
     private static IFlArchive Open(String archivePath, Func<String, Stream> streamFactory, Boolean leaveOpen)

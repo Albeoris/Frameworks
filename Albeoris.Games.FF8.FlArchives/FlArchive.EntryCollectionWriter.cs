@@ -11,12 +11,16 @@ public sealed partial class FlArchive
         {
             Stream listingStream = entryCollection._listingStream;
             Stream metricsStream = entryCollection._metricsStream;
-            
+
             listingStream.Seek(0, SeekOrigin.End);
             metricsStream.Seek(0, SeekOrigin.End);
-            
-            StreamWriter listingWriter = new StreamWriter(listingStream, PathEncoding);
-            listingWriter.WriteLine(InternalPathPrefix + entry.RelativePath);
+
+            // Record the byte positions before writing so the entry can be updated or removed later.
+            entry.ListingPosition = listingStream.Position;
+            entry.MetricsPosition = metricsStream.Position;
+
+            using (StreamWriter listingWriter = new StreamWriter(listingStream, PathEncoding, bufferSize: 1024, leaveOpen: true))
+                listingWriter.WriteLine(InternalPathPrefix + entry.RelativePath);
 
             WriteUInt32(entry.Size);
             WriteUInt32(entry.Offset);
@@ -25,19 +29,34 @@ public sealed partial class FlArchive
 
         public void RemoveEntry(FlArchiveEntry entry)
         {
-            // Remove from listing
+            // Remove from listing: read remaining lines, rewrite from the removed entry's position, truncate.
             Stream listingStream = entryCollection._listingStream;
+            listingStream.Seek(entry.ListingPosition, SeekOrigin.Begin);
+
+            Int64 lineEnd;
+            IReadOnlyList<String> restLines;
+            using (StreamReader reader = new StreamReader(listingStream, PathEncoding, detectEncodingFromByteOrderMarks: false, bufferSize: 1024, leaveOpen: true))
+            {
+                _ = reader.ReadLine();
+                lineEnd = reader.GetBinaryPosition();
+                restLines = reader.ReadAllLines();
+            }
+
+            Int64 listingShift = lineEnd - entry.ListingPosition;
 
             listingStream.Seek(entry.ListingPosition, SeekOrigin.Begin);
-            StreamReader reader = new StreamReader(listingStream, PathEncoding);
-            _ = reader.ReadLine(); // skip current line
-            IReadOnlyList<String> restLines = reader.ReadAllLines();
-            
-            listingStream.Seek(entry.ListingPosition, SeekOrigin.Begin);
-            StreamWriter writer = new StreamWriter(listingStream, PathEncoding);
-            writer.WriteAllLines(restLines);
-            
-            // Remove from metrics
+            using (StreamWriter writer = new StreamWriter(listingStream, PathEncoding, bufferSize: 1024, leaveOpen: true))
+                writer.WriteAllLines(restLines);
+            listingStream.SetLength(listingStream.Position);
+
+            // Shift ListingPosition of all entries that followed the removed line.
+            foreach (FlArchiveEntry remainingEntry in entryCollection.Entries)
+            {
+                if (remainingEntry.ListingPosition > entry.ListingPosition)
+                    remainingEntry.ListingPosition -= listingShift;
+            }
+
+            // Remove from metrics: shift remaining bytes left, then truncate.
             const Int32 metricsEntrySize = sizeof(UInt32) * 3;
 
             Stream metricsStream = entryCollection._metricsStream;
@@ -58,6 +77,13 @@ public sealed partial class FlArchive
             }
 
             metricsStream.SetLength(metricsStream.Length - metricsEntrySize);
+
+            // Shift MetricsPosition of all entries that followed the removed record.
+            foreach (FlArchiveEntry remainingEntry in entryCollection.Entries)
+            {
+                if (remainingEntry.MetricsPosition > entry.MetricsPosition)
+                    remainingEntry.MetricsPosition -= metricsEntrySize;
+            }
         }
 
         private void WriteUInt32(UInt32 value) => entryCollection._metricsStream.WriteStruct(value);

@@ -52,7 +52,48 @@ public sealed partial class FlArchive
 
         public Stream OpenForWrite(FlArchiveEntry entry, UInt32 desiredSize)
         {
-            throw new NotImplementedException();
+            Boolean isUnplaced = entry.Size == 0;
+
+            if (desiredSize == 0)
+            {
+                if (!isUnplaced)
+                {
+                    UnregisterEntryContentPosition(entry);
+                    entry.Offset = 0;
+                    entry.Size = 0;
+                    entry.Compression = FlCompressionMethod.None;
+                    UpdateEntryMetrics(entry);
+                }
+                _hasChanges = true;
+                OpenEntry(entry);
+                return ProtectEntry(entry, new SegmentStream(_contentStream, 0, 0));
+            }
+
+            Int64 capacity = isUnplaced ? -1 : _capacityCalculator.GetCapacity(entry.Offset);
+
+            if (isUnplaced || capacity < desiredSize)
+            {
+                // Not enough space at the current offset: append to the end of the content file.
+                UnregisterEntryContentPosition(entry);
+                entry.Offset = checked((UInt32)_contentStream.Length);
+                entry.Size = desiredSize;
+                entry.Compression = FlCompressionMethod.None;
+                IncreaseContentSize(desiredSize);
+                RegisterEntryContentPosition(entry);
+                UpdateEntryMetrics(entry);
+            }
+            else if (entry.Size != desiredSize || entry.Compression != FlCompressionMethod.None)
+            {
+                // Fits in the existing slot — update size/compression in-place.
+                entry.Size = desiredSize;
+                entry.Compression = FlCompressionMethod.None;
+                UpdateEntryMetrics(entry);
+            }
+
+            _hasChanges = true;
+            OpenEntry(entry);
+            SegmentStream segment = new SegmentStream(_contentStream, entry.Offset, entry.Size);
+            return ProtectEntry(entry, segment);
         }
         
         private void OpenEntry(FlArchiveEntry entry)
@@ -151,7 +192,22 @@ public sealed partial class FlArchive
             if (entry.Size != 0)
                 _capacityCalculator.UnregisterBoundary(entry.Offset);
         }
-        
+
+        private void UpdateEntryMetrics(FlArchiveEntry entry)
+        {
+            _metricsStream.Position = entry.MetricsPosition;
+            _metricsStream.WriteStruct(entry.Size);
+            _metricsStream.WriteStruct(entry.Offset);
+            _metricsStream.WriteStruct((Int32)entry.Compression);
+        }
+
+        private void IncreaseContentSize(UInt32 size)
+        {
+            _capacityCalculator.UnregisterBoundary(_contentStream.Length);
+            _contentStream.SetLength(_contentStream.Length + size);
+            _capacityCalculator.RegisterBoundary(_contentStream.Length);
+        }
+
         public IFlArchiveEntry AddEntry(String relativePath)
         {
             ArgumentNullException.ThrowIfNull(relativePath);
@@ -167,7 +223,8 @@ public sealed partial class FlArchive
 
             EntryCollectionWriter writer = new EntryCollectionWriter(this);
             writer.AppendEntry(entry);
-            
+            _hasChanges = true;
+
             return entry;
         }
 
@@ -179,10 +236,11 @@ public sealed partial class FlArchive
                 throw new InvalidOperationException($"The file {relativePath} does not exist inside the archive.");
 
             entry.DetachFromArchive();
-            
+
             EntryCollectionWriter writer = new EntryCollectionWriter(this);
             writer.RemoveEntry(entry);
-            
+            _hasChanges = true;
+
             UnregisterEntryContentPosition(entry);
         }
         
@@ -191,252 +249,14 @@ public sealed partial class FlArchive
             if (!_hasChanges)
                 return;
 
-            throw new NotImplementedException();
+            // The FL listing (.fl) and metrics (.fi) files are kept up to date incrementally by
+            // AppendEntry / RemoveEntry. The content (.fs) file is written directly through
+            // SegmentStream. All that remains is flushing OS-level write buffers.
+            _listingStream.Flush();
+            _metricsStream.Flush();
+            _contentStream.Flush();
 
-            // if (!_capacityCalculator.TryGetCapacity(0, out Int64 headerCapacity) || headerCapacity < _headerSize)
-            // {
-            //     List<ZzzArchiveEntry> entriesToMove = new();
-            //     foreach (ZzzArchiveEntry entry in _entries.Values)
-            //     {
-            //         if (entry.Size == 0)
-            //             continue;
-            //
-            //         entriesToMove.Add(entry);
-            //
-            //         headerCapacity = entry.Offset;
-            //         if (headerCapacity >= _headerSize + HeaderPadding)
-            //             break;
-            //     }
-            //
-            //     // End of file
-            //     Int64 delta = _headerSize + HeaderPadding - headerCapacity;
-            //     if (delta > 0)
-            //     {
-            //         _capacityCalculator.UnregisterBoundary(_archiveStream.Length);
-            //         _archiveStream.SetLength(_archiveStream.Length + delta);
-            //         _capacityCalculator.RegisterBoundary(_archiveStream.Length);
-            //     }
-            //
-            //     Byte[] buffer = new Byte[MovingBufferSize];
-            //
-            //     foreach (ZzzArchiveEntry entry in entriesToMove)
-            //         MoveContentToEndOfArchive(entry, buffer);
-            // }
-            //
-            // headerCapacity = _capacityCalculator.GetCapacity(offset: 0);
-            // if (headerCapacity < _headerSize)
-            //     throw new InvalidOperationException($"Failed to free space for the header size of {_headerSize}.");
-            //
-            // _archiveStream.Position = 0;
-            //
-            // SortEntriesByOffset();
-            // EntryCollectionWriter.Write(_archiveStream, this);
-            //
-            // _hasChanges = false;
+            _hasChanges = false;
         }
     }
 }
-
-public sealed class LZSStream
-    {
-        private readonly Stream _input;
-        private readonly Stream _output;
-        private readonly CircularBuffer<Byte> _circularBuffer;
-
-        public event EventHandler<Int32> ReverseProgress;
-
-        public LZSStream(Stream input, Stream output)
-        {
-            if (input == null)
-                throw new ArgumentNullException("input");
-            if (output == null)
-                throw new ArgumentNullException("output");
-
-            if (!input.CanRead)
-                throw new ArgumentException("Входной поток не поддерживает чтения.", "input");
-            if (!output.CanWrite)
-                throw new ArgumentException("Выходной поток не поддерживает записи.", "input");
-
-            _input = input;
-            _output = output;
-            _circularBuffer = new CircularBuffer<Byte>(4096);
-        }
-
-        public void Decompress(Int32 unpackedLength)
-        {
-            Byte bits = 0, bitsCount = 0;
-
-            while (unpackedLength != 0)
-            {
-                Int32 b = _input.ReadByte();
-                if (b == -1)
-                    throw new Exception("Непредвиденный конец входного потока.");
-
-                
-
-                Byte current = (Byte)b;
-
-                if (bitsCount == 0)
-                {
-                    bits = current;
-                    bitsCount = 8;
-                    continue;
-                }
-
-                if ((bits & 1) != 0)
-                {
-                    _output.WriteByte(current);
-                    _circularBuffer.Write(current);
-                    unpackedLength--;
-                }
-                else
-                {
-                    Int16 offset = current;
-
-                    b = _input.ReadByte();
-                    if (b == -1)
-                        throw new Exception("Непредвиденный конец входного потока.");
-
-                    current = (Byte)b;
-
-                    offset += (Int16)((current & 0xF0) << 4);
-                    Int16 length = (Int16)((current & 0xF) + 3);
-
-                    for (Int32 i = offset + 18; --length >= 0; i++)
-                    {
-                        i &= 0xFFF;
-                        current = _circularBuffer.GetByOffset(i);
-                        _output.WriteByte(current);
-                        _circularBuffer.Write(current);
-                        unpackedLength--;
-                    }
-                }
-
-                bits >>= 1;
-                bitsCount--;
-            }
-        }
-    }
-    
-public sealed class CircularBuffer<T>
-{
-    private readonly T[] _buff;
-    private Int32 _index;
-
-    public Int32 Length
-    {
-        get { return _buff.Length; }
-    }
-
-    public Int64 Index
-    {
-        get { return _index; }
-    }
-
-    public CircularBuffer(Int32 length)
-    {
-        if (length < 1)
-            throw new Exception("Длина циклического буфера не может быть меньше 1.");
-
-        _buff = new T[length];
-    }
-
-    public void Write(T value)
-    {
-        _buff[_index] = value;
-        _index = (_index + 1) % _buff.Length;
-    }
-
-    public void Write(Byte[] value, Int32 index, Int32 length)
-    {
-        index += (length / _buff.Length) * _buff.Length;
-        length %= _buff.Length;
-
-        Int32 last = Math.Min(length, (_buff.Length - _index));
-        Array.Copy(value, index, _buff, _index, last);
-
-        Int32 first = length - last;
-        if (first != 0)
-            Array.Copy(value, index + last, _buff, 0, first);
-
-        _index = (index + length) % _buff.Length;
-    }
-
-    public T GetByOffset(Int32 offset)
-    {
-        return _buff[offset];
-    }
-}
-
-public class LZSS
-    {
-        #region Fields
-
-        private const Int32 EOF = -1;
-        private const Int32 F = 18;
-        private const Int32 N = 4096;
-        private const Int32 THRESHOLD = 2;
-
-        #endregion Fields
-
-        #region Methods
-
-        public static Byte[] DecompressAllNew(Byte[] data, Int32 uncompressedSize, Boolean skip = false)
-        {
-            if (uncompressedSize < 0) throw new ArgumentOutOfRangeException(nameof(uncompressedSize)); // if 0 ignore checks.
-            //Memory.Log.WriteLine($"{nameof(LZSS)}::{nameof(DecompressAllNew)} :: decompressing data");
-            Byte[] outFileArray;
-            using (var infile = new MemoryStream(!skip ? data : data.Skip(4).ToArray()))
-            {
-                Decode(infile, out outFileArray);
-            }
-            if (uncompressedSize > 0 && outFileArray.Length != uncompressedSize)
-                throw new InvalidDataException($"{nameof(LZSS)}::{nameof(DecompressAllNew)} Expected size ({uncompressedSize}) != ({outFileArray.Length})");
-            return outFileArray;
-        }
-
-        //Code borrowed from Java's implementation of LZSS by antiquechrono
-        private static void Decode(Stream infile, out Byte[] outFileArray)
-        {
-            var outfile = new List<Byte>();
-
-            var textBuf = new Int32[N + F - 1];    // ring buffer of size N, with extra F-1 bytes to facilitate string comparison
-
-            var r = N - F; var flags = 0;
-            for (; ; )
-            {
-                Int32 c;
-                if (((flags >>= 1) & 256) == 0)
-                {
-                    if ((c = infile.ReadByte()) == EOF) break;
-                    flags = c | 0xff00;     // uses higher byte cleverly
-                }                           // to Count eight
-                if ((flags & 1) == 1)
-                {
-                    if ((c = infile.ReadByte()) == EOF) break;
-                    outfile.Add((Byte)c);
-                    textBuf[r++] = c;
-                    r &= (N - 1);
-                }
-                else
-                {
-                    Int32 i;
-                    if ((i = infile.ReadByte()) == EOF) break;
-                    Int32 j;
-                    if ((j = infile.ReadByte()) == EOF) break;
-                    i |= ((j & 0xf0) << 4); j = (j & 0x0f) + THRESHOLD;
-                    Int32 k;
-                    for (k = 0; k <= j; k++)
-                    {
-                        c = textBuf[(i + k) & (N - 1)];
-                        outfile.Add((Byte)c);
-                        textBuf[r++] = c;
-                        r &= (N - 1);
-                    }
-                }
-            }
-            outFileArray = outfile.ToArray();
-        }
-
-        #endregion Methods
-    }
