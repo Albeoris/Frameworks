@@ -1,0 +1,34 @@
+typedef struct
+{
+    uint32 RelativePathLength <fgcolor=cGray>;
+    char RelativePath[RelativePathLength] <fgcolor=cYellow>;
+    uint64 Offset <fgcolor=cLtBlue>;
+    uint32 Size <fgcolor=cGreen>;
+} ZzzEntry; 
+
+string ZzzEntry_Name(ZzzEntry &v)
+{
+  string result; 
+  SPrintf( result, "0x%016X (Size: 0x%08X) %s", v.Offset, v.Size, v.RelativePath );
+  return result;
+}
+
+typedef struct (ZzzEntry &entry)
+{
+    byte Content[entry.Size];
+} ZzzEntryContent; 
+
+
+uint32 Count;
+ZzzEntry Entries[Count] <optimize=false, name=ZzzEntry_Name>;
+
+local uint64 position;
+local int i;
+for(i = 0; i < Count; i++)
+{
+    position = FTell();
+    if (position != Entries[i].Offset)
+        FSeek(Entries[i].Offset);
+    
+    ZzzEntryContent Content(Entries[i]);
+} 

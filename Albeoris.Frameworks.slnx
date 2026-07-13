@@ -1,0 +1,30 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="Release" />
+  </Configurations>
+  <Folder Name="/Albeoris.Games.Core/">
+    <Project Path="Albeoris.Games.Core\Albeoris.Games.Core.Abstractions\Albeoris.Games.Core.Abstractions.csproj" Type="Classic C#" />
+    <Project Path="Albeoris.Games.Core\Albeoris.Games.Core.Tests\Albeoris.Games.Core.Tests.csproj" Type="Classic C#" />
+    <Project Path="Albeoris.Games.Core\Albeoris.Games.Core\Albeoris.Games.Core.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/Albeoris.Games.FF8.FlArchives/">
+    <Project Path="Albeoris.Games.FF8.FlArchives.Abstractions\Albeoris.Games.FF8.FlArchives.Abstractions.csproj" Type="Classic C#" />
+    <Project Path="Albeoris.Games.FF8.FlArchives.Tests\Albeoris.Games.FF8.FlArchives.Tests.csproj" Type="Classic C#" />
+    <Project Path="Albeoris.Games.FF8.FlArchives\Albeoris.Games.FF8.FlArchives.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/Albeoris.Games.FF8.ZzzArchives/">
+    <Project Path="Albeoris.Games.FF8.ZzzArchives\Albeoris.Games.FF8.ZzzArchives.Abstractions\Albeoris.Games.FF8.ZzzArchives.Abstractions.csproj" Type="Classic C#" />
+    <Project Path="Albeoris.Games.FF8.ZzzArchives\Albeoris.Games.FF8.ZzzArchives.Tests\Albeoris.Games.FF8.ZzzArchives.Tests.csproj" Type="Classic C#" />
+    <Project Path="Albeoris.Games.FF8.ZzzArchives\Albeoris.Games.FF8.ZzzArchives\Albeoris.Games.FF8.ZzzArchives.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".gitignore" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+  </Folder>
+</Solution>

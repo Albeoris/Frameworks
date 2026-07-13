@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Albeoris.Games.Core\Albeoris.Games.Core\Albeoris.Games.Core.csproj" />
+      <ProjectReference Include="..\Albeoris.Games.FF8.ZzzArchives.Abstractions\Albeoris.Games.FF8.ZzzArchives.Abstractions.csproj" />
+    </ItemGroup>
+
+</Project>
