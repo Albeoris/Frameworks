@@ -18,26 +18,32 @@ public sealed partial class FlArchive
         private readonly OrderedDictionary<String, FlArchiveEntry> _entries;
         private readonly CapacityCalculator _capacityCalculator;
 
-        public EntryCollection(Stream listingStream, Stream metricsStream, Stream contentStream, OrderedDictionary<String, FlArchiveEntry> entries, CapacityCalculator capacityCalculator)
+        /// <summary>Byte offset in the metrics stream immediately after the last valid 12-byte record.
+        /// Bytes between this position and <c>_metricsStream.Length</c> are pre-allocated space reserved
+        /// by <see cref="FlArchive.Optimize"/> and must not be treated as valid entries.</summary>
+        internal Int64 MetricsLogicalEnd { get; set; }
+
+        public EntryCollection(Stream listingStream, Stream metricsStream, Stream contentStream, OrderedDictionary<String, FlArchiveEntry> entries, CapacityCalculator capacityCalculator, Int64 metricsLogicalEnd)
         {
             ArgumentNullException.ThrowIfNull(listingStream);
             ArgumentNullException.ThrowIfNull(metricsStream);
             ArgumentNullException.ThrowIfNull(contentStream);
             ArgumentNullException.ThrowIfNull(entries);
             ArgumentNullException.ThrowIfNull(capacityCalculator);
-            
+
             _listingStream = listingStream;
             _metricsStream = metricsStream;
             _contentStream = contentStream;
             _entries = entries;
             _capacityCalculator = capacityCalculator;
+            MetricsLogicalEnd = metricsLogicalEnd;
         }
-        
+
         public static EntryCollection CreateEmpty(Stream listingStream, Stream metricsStream, Stream contentStream)
         {
             CapacityCalculator calculator = new CapacityCalculator();
             calculator.RegisterBoundary(contentStream.Length);
-            return new EntryCollection(listingStream, metricsStream, contentStream, new OrderedDictionary<String, FlArchiveEntry>(PathComparer), calculator);
+            return new EntryCollection(listingStream, metricsStream, contentStream, new OrderedDictionary<String, FlArchiveEntry>(PathComparer), calculator, metricsLogicalEnd: 0);
         }
         
         public IReadOnlyList<FlArchiveEntry> Entries => _entries.Values;

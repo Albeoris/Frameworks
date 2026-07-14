@@ -42,8 +42,8 @@ public class FlArchiveTests
             using MemoryStream fiTarget = new();
             using MemoryStream fsTarget = new();
 
-            using (IFlArchive source = FlArchive.Open(flSource, fiSource, fsSource, leaveOpen: true))
-            using (IFlArchive target = FlArchive.Open(flTarget, fiTarget, fsTarget, leaveOpen: true))
+            using (IFlArchive source = FlArchive.Open(flSource, fiSource, fsSource, leaveOpen: true, FlArchiveRepresentation.Files))
+            using (IFlArchive target = FlArchive.Open(flTarget, fiTarget, fsTarget, leaveOpen: true, FlArchiveRepresentation.Files))
             {
                 Assert.Equal(expectedContents.Count, source.Entries.Count);
 
@@ -100,7 +100,7 @@ public class FlArchiveTests
         fi.Position = 0;
         fs.Position = 0;
 
-        using IFlArchive archive = FlArchive.Open(fl, fi, fs, leaveOpen: true);
+        using IFlArchive archive = FlArchive.Open(fl, fi, fs, leaveOpen: true, FlArchiveRepresentation.Files);
 
         // hello.txt starts at offset 0 with 2 bytes; rewrite with 13 bytes forces relocation.
         IFlArchiveEntry helloEntry = archive.Entries.First(e => e.RelativePath == "hello.txt");

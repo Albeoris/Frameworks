@@ -28,7 +28,7 @@ namespace Albeoris.Games.FF8.FlArchives;
 ///       listing file. Record layout (little-endian):
 ///       <c>[UInt32 uncompressedSize][UInt32 contentOffset][Int32 compressionMethod]</c>.
 ///       <see cref="FlCompressionMethod"/> values: 0 = None, 1 = LZS, 2 = LZ4.
-///       The entry count is derived from <c>fileSize / 12</c>.
+///       The entry count is derived from the number of lines in the listing file.
 ///     </description>
 ///   </item>
 ///   <item>
@@ -52,16 +52,31 @@ namespace Albeoris.Games.FF8.FlArchives;
 /// </remarks>
 public sealed partial class FlArchive
 {
+    /// <summary>Gets or sets the encoding used to read and write listing file paths.</summary>
     public static Encoding PathEncoding { get; set; } = Encoding.ASCII;
+
+    /// <summary>Gets or sets the comparer used to compare relative entry paths.</summary>
     public static StringComparer PathComparer { get; set; } = StringComparer.OrdinalIgnoreCase;
+
+    /// <summary>Gets or sets the prefix expected on every line of the listing file.</summary>
     public static String InternalPathPrefix { get; set; } = @"c:\ff8\data\";
+
+    /// <summary>Gets or sets the size of the buffer used when moving content blocks.</summary>
     public static Int32 MovingBufferSize { get; set; } = 64 * 1024 * 1024;
 
-    public static IFlArchive OpenForRead(String archivePath) => Open(archivePath, File.OpenRead, leaveOpen: false);
-    public static IFlArchive OpenForWrite(String archivePath) => Open(archivePath, f => new FileStream(f, FileMode.Open, FileAccess.ReadWrite), leaveOpen: false);
-    public static IFlArchive Create(String archivePath) => Open(archivePath, File.Create, leaveOpen: false);
+    /// <summary>Opens an existing archive in read-only mode.</summary>
+    public static IFlArchive OpenForRead(String archivePath, FlArchiveRepresentation representation)
+        => Open(archivePath, File.OpenRead, leaveOpen: false, representation);
 
-    private static IFlArchive Open(String archivePath, Func<String, Stream> streamFactory, Boolean leaveOpen)
+    /// <summary>Opens an existing archive in read-write mode.</summary>
+    public static IFlArchive OpenForWrite(String archivePath, FlArchiveRepresentation representation)
+        => Open(archivePath, f => new FileStream(f, FileMode.Open, FileAccess.ReadWrite), leaveOpen: false, representation);
+
+    /// <summary>Creates a new empty archive, overwriting any existing files.</summary>
+    public static IFlArchive Create(String archivePath, FlArchiveRepresentation representation)
+        => Open(archivePath, File.Create, leaveOpen: false, representation);
+
+    private static IFlArchive Open(String archivePath, Func<String, Stream> streamFactory, Boolean leaveOpen, FlArchiveRepresentation representation)
     {
         String listingPath = Path.ChangeExtension(archivePath, ".fl");
         String indicesPath = Path.ChangeExtension(archivePath, ".fi");
@@ -73,11 +88,12 @@ public sealed partial class FlArchive
             Stream indicesStream = disposableStack.Add(streamFactory(indicesPath));
             Stream contentStream = disposableStack.Add(streamFactory(contentPath));
             disposableStack.Clear();
-            return Open(listingStream, indicesStream, contentStream, leaveOpen);
+            return Open(listingStream, indicesStream, contentStream, leaveOpen, representation);
         }
     }
 
-    public static IFlArchive Open(Stream listingStream, Stream indicesStream, Stream contentStream, Boolean leaveOpen)
+    /// <summary>Opens an archive from the provided streams.</summary>
+    public static IFlArchive Open(Stream listingStream, Stream indicesStream, Stream contentStream, Boolean leaveOpen, FlArchiveRepresentation representation)
     {
         ArgumentNullException.ThrowIfNull(listingStream);
         ArgumentNullException.ThrowIfNull(indicesStream);
@@ -91,13 +107,26 @@ public sealed partial class FlArchive
         if (leaveOpen) indicesStream = new RestrictedStream(indicesStream) { CanFlush = false, CanDispose = false };
         if (leaveOpen) contentStream = new RestrictedStream(contentStream) { CanFlush = false, CanDispose = false };
 
-        return new FlArchive(listingStream, indicesStream, contentStream);
+        FlArchive rawArchive = new FlArchive(listingStream, indicesStream, contentStream);
+
+        return representation switch
+        {
+            FlArchiveRepresentation.Files  => rawArchive,
+            FlArchiveRepresentation.Folder => new FolderFlArchive(rawArchive),
+            _ => throw new ArgumentOutOfRangeException(nameof(representation), representation, null),
+        };
     }
 
     private static void ValidateEntry(IFlArchiveEntry entry, ICapacityCalculator capacityCalculator)
     {
         if (entry.Offset < 0)
             throw new FormatException($"Invalid offset {entry.Offset} of entry [{entry.RelativePath}]");
+
+        // Zero-size entries carry no content; their offset is a sentinel value and must not be
+        // checked against content-file boundaries (the offset may equal contentStream.Length,
+        // which is the last registered boundary and has no successor).
+        if (entry.Size == 0)
+            return;
 
         Int64 capacity = capacityCalculator.GetCapacity(entry.Offset);
         if (false && entry.Size > capacity)
