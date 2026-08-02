@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <RootNamespace>Albeoris.Games.FF8.TextEncoding</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Albeoris.Games.Core\Albeoris.Games.Core\Albeoris.Games.Core.csproj" />
+        <ProjectReference Include="..\Albeoris.Games.FF8.TextEncoding.Abstractions\Albeoris.Games.FF8.TextEncoding.Abstractions.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="Resources\*.json" />
+    </ItemGroup>
+
+</Project>

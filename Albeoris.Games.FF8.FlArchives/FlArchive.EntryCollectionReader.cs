@@ -1,5 +1,4 @@
-﻿using System.Text;
-using Albeoris.Games.Core.NsCapacityCalculator;
+﻿using Albeoris.Games.Core.NsCapacityCalculator;
 using Albeoris.Games.Core.NsCollections;
 using Albeoris.Games.Core.NsStreams;
 using Albeoris.Games.FF8.FlArchives.Abstractions;

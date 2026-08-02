@@ -1,5 +1,4 @@
 ﻿using Albeoris.Games.Core.NsStreams;
-using Albeoris.Games.FF8.FlArchives.Abstractions;
 
 namespace Albeoris.Games.FF8.FlArchives;
 

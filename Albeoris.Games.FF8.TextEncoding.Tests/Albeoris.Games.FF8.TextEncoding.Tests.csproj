@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>Albeoris.Games.FF8.TextEncoding.Tests</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.NET.Test.Sdk" />
+      <PackageReference Include="xunit.v3" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Albeoris.Games.FF8.TextEncoding.Abstractions\Albeoris.Games.FF8.TextEncoding.Abstractions.csproj" />
+      <ProjectReference Include="..\Albeoris.Games.FF8.TextEncoding\Albeoris.Games.FF8.TextEncoding.csproj" />
+    </ItemGroup>
+
+</Project>
