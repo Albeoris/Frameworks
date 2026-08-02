@@ -8,6 +8,11 @@
     <Project Path="Albeoris.Games.Core\Albeoris.Games.Core.Tests\Albeoris.Games.Core.Tests.csproj" Type="Classic C#" />
     <Project Path="Albeoris.Games.Core\Albeoris.Games.Core\Albeoris.Games.Core.csproj" Type="Classic C#" />
   </Folder>
+  <Folder Name="/Albeoris.Games.FF8.Encoding/">
+    <Project Path="Albeoris.Games.FF8.Encoding.Abstractions\Albeoris.Games.FF8.Encoding.Abstractions.csproj" Type="Classic C#" />
+    <Project Path="Albeoris.Games.FF8.Encoding.Tests\Albeoris.Games.FF8.Encoding.Tests.csproj" Type="Classic C#" />
+    <Project Path="Albeoris.Games.FF8.Encoding\Albeoris.Games.FF8.Encoding.csproj" Type="Classic C#" />
+  </Folder>
   <Folder Name="/Albeoris.Games.FF8.FlArchives/">
     <Project Path="Albeoris.Games.FF8.FlArchives.Abstractions\Albeoris.Games.FF8.FlArchives.Abstractions.csproj" Type="Classic C#" />
     <Project Path="Albeoris.Games.FF8.FlArchives.Tests\Albeoris.Games.FF8.FlArchives.Tests.csproj" Type="Classic C#" />
