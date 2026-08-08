@@ -30,11 +30,11 @@ public class KernelDataRoundTripTests
         KernelData original = CreateSyntheticData();
         KernelData data = WriteThenRead(original, encoding);
 
-        data.BattleCommands[1].Description = "\u30bb\u30c4\u30e1\u30a4\uff12\uff16";
+        data.BattleCommands[1].Description = "セツメイ２６";
 
         KernelData edited = WriteThenRead(data, encoding);
 
-        Assert.Equal("\u30bb\u30c4\u30e1\u30a4\uff12\uff16", edited.BattleCommands[1].Description);
+        Assert.Equal("セツメイ２６", edited.BattleCommands[1].Description);
         Assert.Equal(data.BattleCommands[0].Name, edited.BattleCommands[0].Name);
         Assert.Equal(data.FieldItems[0].Name, edited.FieldItems[0].Name);
     }

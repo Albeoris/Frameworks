@@ -4,6 +4,13 @@ namespace Albeoris.Games.Core.NsCollections;
 
 public static class ExtensionsForIOrderedDictionary
 {
+#if NET10_0_OR_GREATER
+    public static Boolean TryRemove<TKey, TValue>(this System.Collections.Generic.OrderedDictionary<TKey, TValue> dictionary, TKey key, [System.Diagnostics.CodeAnalysis.MaybeNullWhen(false)] out TValue value) where TKey : notnull
+    {
+        return dictionary.Remove(key, out value);
+    }
+#endif
+
     public static void Add<TKey, TValue>(this IOrderedDictionary<TKey, TValue> dictionary, TKey key, TValue value) where TKey : notnull
     {
         if (!dictionary.TryAdd(key, value))

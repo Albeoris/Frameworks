@@ -14,6 +14,11 @@
     <Project Path="Albeoris.Games.FF8.KernelBin.Tests\Albeoris.Games.FF8.KernelBin.Tests.csproj" Type="C#" />
     <Project Path="Albeoris.Games.FF8.KernelBin\Albeoris.Games.FF8.KernelBin.csproj" Type="C#" />
   </Folder>
+  <Folder Name="/Albeoris.Games.FF8.MngrpBin/">
+    <Project Path="Albeoris.Games.FF8.MngrpBin.Abstractions\Albeoris.Games.FF8.MngrpBin.Abstractions.csproj" Type="C#" />
+    <Project Path="Albeoris.Games.FF8.MngrpBin.Tests\Albeoris.Games.FF8.MngrpBin.Tests.csproj" Type="C#" />
+    <Project Path="Albeoris.Games.FF8.MngrpBin\Albeoris.Games.FF8.MngrpBin.csproj" Type="C#" />
+  </Folder>
   <Folder Name="/Albeoris.Games.FF8.TextEncoding/">
     <Project Path="Albeoris.Games.FF8.TextEncoding.Abstractions/Albeoris.Games.FF8.TextEncoding.Abstractions.csproj" Type="C#" />
     <Project Path="Albeoris.Games.FF8.TextEncoding.Tests/Albeoris.Games.FF8.TextEncoding.Tests.csproj" Type="C#" />

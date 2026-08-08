@@ -45,7 +45,8 @@ internal sealed class Codepage
         get
         {
             Char c = _characters[index];
-            return c == '\0' ? MissingByteToCharFallback : c;
+            if (c == '\0') throw new FormatException(); // return MissingByteToCharFallback;
+            return c;
         }
     }
 

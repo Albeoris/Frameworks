@@ -38,9 +38,7 @@ internal sealed class TextTag
     {
         bytes[offset++] = (Byte)Code;
         if (Parameter is null)
-        {
             return 1;
-        }
 
         bytes[offset++] = Convert.ToByte(Parameter, CultureInfo.InvariantCulture);
         return 2;
@@ -144,6 +142,16 @@ internal sealed class TextTag
                 offset += 2;
                 left -= 2;
                 return new TextTag(code, (TextTagDialog)bytes[offset - 1]);
+            
+            case TextTagCode.Option:
+                if (left < 2)
+                {
+                    break;
+                }
+
+                offset += 2;
+                left -= 2;
+                return new TextTag(code, bytes[offset - 1]);
 
             case TextTagCode.Term:
                 if (left < 2)
@@ -154,6 +162,16 @@ internal sealed class TextTag
                 offset += 2;
                 left -= 2;
                 return new TextTag(code, (TextTagTerm)bytes[offset - 1]);
+            
+            case TextTagCode.Name:
+                if (left < 2)
+                {
+                    break;
+                }
+
+                offset += 2;
+                left -= 2;
+                return new TextTag(code, (TextTagName)bytes[offset - 1]);
         }
 
         offset = startOffset;
@@ -237,11 +255,27 @@ internal sealed class TextTag
                 }
 
                 return null;
+            
+            case TextTagCode.Option:
+                if (Byte.TryParse(parameterText, NumberStyles.Integer, CultureInfo.InvariantCulture, out Byte numericParameter1))
+                {
+                    return new TextTag(code, numericParameter1);
+                }
+
+                return null;
 
             case TextTagCode.Term:
                 if (Enum.TryParse(parameterText, out TextTagTerm termParameter))
                 {
                     return new TextTag(code, termParameter);
+                }
+
+                return null;
+            
+            case TextTagCode.Name:
+                if (Enum.TryParse(parameterText, out TextTagName nameParameter))
+                {
+                    return new TextTag(code, nameParameter);
                 }
 
                 return null;

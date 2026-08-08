@@ -31,9 +31,15 @@ public enum TextTagCode
 
     /// <summary>References a <see cref="TextTagDialog"/> parameter.</summary>
     Dialog = 0x0A,
+    
+    /// <summary>References a <see cref="TextTagOption"/> parameter.</summary>
+    Option = 0x0B,
 
     /// <summary>References a <see cref="TextTagTerm"/> parameter.</summary>
     Term = 0x0E,
+    
+    /// <summary>References a <see cref="TextTagName"/> parameter.</summary>
+    Name = 0x0C,
 
     /// <summary>Marks the name of the speaker.</summary>
     Speaker = 0x12,
