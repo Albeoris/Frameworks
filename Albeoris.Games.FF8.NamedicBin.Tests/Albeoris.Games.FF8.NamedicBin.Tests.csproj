@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Albeoris.Games.Core\Albeoris.Games.Core\Albeoris.Games.Core.csproj" />
+    <ProjectReference Include="..\Albeoris.Games.FF8.NamedicBin\Albeoris.Games.FF8.NamedicBin.csproj" />
+    <ProjectReference Include="..\Albeoris.Games.FF8.TextEncoding\Albeoris.Games.FF8.TextEncoding.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\*.zip" />
+  </ItemGroup>
+
+</Project>
