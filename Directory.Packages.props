@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageVersion Include="ValveKeyValue" Version="0.11.0.378" />
     <PackageVersion Include="xunit.v3" Version="1.0.1" />
   </ItemGroup>
 </Project>

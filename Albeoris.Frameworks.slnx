@@ -19,6 +19,11 @@
     <Project Path="Albeoris.Games.FF8.MngrpBin.Tests\Albeoris.Games.FF8.MngrpBin.Tests.csproj" Type="C#" />
     <Project Path="Albeoris.Games.FF8.MngrpBin\Albeoris.Games.FF8.MngrpBin.csproj" Type="C#" />
   </Folder>
+  <Folder Name="/Albeoris.Games.FF8.C0mDat/">
+    <Project Path="Albeoris.Games.FF8.C0mDat.Abstractions\Albeoris.Games.FF8.C0mDat.Abstractions.csproj" Type="C#" />
+    <Project Path="Albeoris.Games.FF8.C0mDat.Tests\Albeoris.Games.FF8.C0mDat.Tests.csproj" Type="C#" />
+    <Project Path="Albeoris.Games.FF8.C0mDat\Albeoris.Games.FF8.C0mDat.csproj" Type="C#" />
+  </Folder>
   <Folder Name="/Albeoris.Games.FF8.NamedicBin/">
     <Project Path="Albeoris.Games.FF8.NamedicBin.Tests\Albeoris.Games.FF8.NamedicBin.Tests.csproj" Type="C#" />
     <Project Path="Albeoris.Games.FF8.NamedicBin\Albeoris.Games.FF8.NamedicBin.csproj" Type="C#" />
@@ -32,6 +37,11 @@
     <Project Path="Albeoris.Games.FF8.ZzzArchives\Albeoris.Games.FF8.ZzzArchives.Abstractions\Albeoris.Games.FF8.ZzzArchives.Abstractions.csproj" Type="C#" />
     <Project Path="Albeoris.Games.FF8.ZzzArchives\Albeoris.Games.FF8.ZzzArchives.Tests\Albeoris.Games.FF8.ZzzArchives.Tests.csproj" Type="C#" />
     <Project Path="Albeoris.Games.FF8.ZzzArchives\Albeoris.Games.FF8.ZzzArchives\Albeoris.Games.FF8.ZzzArchives.csproj" Type="C#" />
+  </Folder>
+  <Folder Name="/Albeoris.Games.SteamLibrary/">
+    <Project Path="Albeoris.Games.SteamLibrary\Albeoris.Games.SteamLibrary.Abstractions\Albeoris.Games.SteamLibrary.Abstractions.csproj" Type="C#" />
+    <Project Path="Albeoris.Games.SteamLibrary\Albeoris.Games.SteamLibrary.Tests\Albeoris.Games.SteamLibrary.Tests.csproj" Type="C#" />
+    <Project Path="Albeoris.Games.SteamLibrary\Albeoris.Games.SteamLibrary\Albeoris.Games.SteamLibrary.csproj" Type="C#" />
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
