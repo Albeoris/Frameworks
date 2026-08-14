@@ -33,6 +33,10 @@
     <Project Path="Albeoris.Games.FF8.TextEncoding.Tests/Albeoris.Games.FF8.TextEncoding.Tests.csproj" Type="C#" />
     <Project Path="Albeoris.Games.FF8.TextEncoding/Albeoris.Games.FF8.TextEncoding.csproj" Type="C#" />
   </Folder>
+  <Folder Name="/Albeoris.Games.FF8.Toolset/">
+    <Project Path="Albeoris.Games.FF8.Toolset\Albeoris.Games.FF8.Toolset.csproj" Type="C#" />
+    <Project Path="Albeoris.Games.FF8.Toolset.Tests\Albeoris.Games.FF8.Toolset.Tests.csproj" Type="C#" />
+  </Folder>
   <Folder Name="/Albeoris.Games.FF8.ZzzArchives/">
     <Project Path="Albeoris.Games.FF8.ZzzArchives\Albeoris.Games.FF8.ZzzArchives.Abstractions\Albeoris.Games.FF8.ZzzArchives.Abstractions.csproj" Type="C#" />
     <Project Path="Albeoris.Games.FF8.ZzzArchives\Albeoris.Games.FF8.ZzzArchives.Tests\Albeoris.Games.FF8.ZzzArchives.Tests.csproj" Type="C#" />

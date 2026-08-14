@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net10.0-windows</TargetFrameworks>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>Albeoris.Games.FF8.Toolset</AssemblyName>
+    <RootNamespace>Albeoris.Games.FF8.Toolset</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Spectre.Console" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Albeoris.Games.SteamLibrary\Albeoris.Games.SteamLibrary\Albeoris.Games.SteamLibrary.csproj" />
+  </ItemGroup>
+
+</Project>
