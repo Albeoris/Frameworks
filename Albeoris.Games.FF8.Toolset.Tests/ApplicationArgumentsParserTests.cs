@@ -55,4 +55,27 @@ public sealed class ApplicationArgumentsParserTests
 
         Assert.Equal("Unknown argument '--game-path'.", exception.Message);
     }
+
+    [Fact]
+    public void Parse_AnalysisArguments_ReturnsLocalModel()
+    {
+        ApplicationArguments result = parser.Parse(
+            ["analysis", "-gp", @"C:\Games\FF8", "--output", "report.html", "-tp", @"C:\Temp", "-ni"]);
+
+        Assert.Equal(OperationMode.Analysis, result.Mode);
+        Assert.True(result.NonInteractive);
+        AnalysisArguments analysis = Assert.IsType<AnalysisArguments>(result.Analysis);
+        Assert.Equal(@"C:\Games\FF8", analysis.GamePath);
+        Assert.Equal("report.html", analysis.OutputPath);
+        Assert.Equal(@"C:\Temp", analysis.TempPath);
+    }
+
+    [Fact]
+    public void Parse_AnalysisOptionWithoutValue_ReportsOption()
+    {
+        CommandLineException exception = Assert.Throws<CommandLineException>(
+            () => parser.Parse(["analysis", "--game-path", "--output", "report.json"]));
+
+        Assert.Equal("--game-path requires a value.", exception.Message);
+    }
 }

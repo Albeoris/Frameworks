@@ -1,3 +1,5 @@
+using Albeoris.Games.FF8.Toolset.Analysis;
+using Albeoris.Games.FF8.Toolset.Analysis.Reports;
 using Albeoris.Games.FF8.Toolset.Installations;
 using Albeoris.Games.FF8.Toolset.Infrastructure;
 using Spectre.Console;
@@ -11,6 +13,8 @@ internal sealed class ToolsetApplication
     private readonly HelpPresenter helpPresenter;
     private readonly InstallationsPlanBuilder installationsPlanBuilder;
     private readonly InstallationsOperation installationsOperation;
+    private readonly AnalysisPlanBuilder analysisPlanBuilder;
+    private readonly AnalysisOperation analysisOperation;
     private readonly PausePresenter pausePresenter;
     private readonly IAnsiConsole console;
     private readonly IApplicationLogger logger;
@@ -21,6 +25,8 @@ internal sealed class ToolsetApplication
         HelpPresenter helpPresenter,
         InstallationsPlanBuilder installationsPlanBuilder,
         InstallationsOperation installationsOperation,
+        AnalysisPlanBuilder analysisPlanBuilder,
+        AnalysisOperation analysisOperation,
         PausePresenter pausePresenter,
         IAnsiConsole console,
         IApplicationLogger logger)
@@ -30,6 +36,8 @@ internal sealed class ToolsetApplication
         this.helpPresenter = helpPresenter;
         this.installationsPlanBuilder = installationsPlanBuilder;
         this.installationsOperation = installationsOperation;
+        this.analysisPlanBuilder = analysisPlanBuilder;
+        this.analysisOperation = analysisOperation;
         this.pausePresenter = pausePresenter;
         this.console = console;
         this.logger = logger;
@@ -41,12 +49,22 @@ internal sealed class ToolsetApplication
 
         IAnsiConsole console = AnsiConsole.Console;
         FinalFantasy8InstallationFinder finder = FinalFantasy8InstallationFinder.CreateDefault(logger);
+        NativePathDialogService dialogs = new();
+        TranslationFileClassifier classifier = new();
+        ArchiveContainerAnalyzer archiveAnalyzer = new(classifier, logger);
+        GameAnalyzer gameAnalyzer = new(
+            new GameArchiveScanner(),
+            archiveAnalyzer,
+            new AnalysisReportFactory(),
+            logger);
         return new ToolsetApplication(
             new ApplicationArgumentsParser(),
             new ModeSelector(console),
             new HelpPresenter(console),
             new InstallationsPlanBuilder(finder, logger),
             new InstallationsOperation(Console.Out, logger),
+            new AnalysisPlanBuilder(new GamePathSelector(console, finder, dialogs), dialogs, logger),
+            new AnalysisOperation(gameAnalyzer, new AnalysisReportFormatterFactory(), console, Console.Out, logger),
             new PausePresenter(console),
             console,
             logger);
@@ -72,26 +90,40 @@ internal sealed class ToolsetApplication
                 return (Int32)ExitCode.Success;
             }
 
-            OperationMode? mode = arguments.Mode;
-            if (mode is null)
+            OperationMode? requestedMode = arguments.Mode;
+            while (true)
             {
-                logger.Information("Selecting a mode interactively.");
-                mode = modeSelector.Select();
+                OperationMode? mode = requestedMode;
                 if (mode is null)
                 {
-                    logger.Information("The user cancelled mode selection.");
-                    return (Int32)ExitCode.Cancelled;
+                    logger.Information("Selecting a mode interactively.");
+                    mode = modeSelector.Select();
+                    if (mode is null)
+                    {
+                        logger.Information("The user cancelled mode selection.");
+                        return (Int32)ExitCode.Cancelled;
+                    }
                 }
+
+                logger.Information($"Selected mode: {mode}.");
+                try
+                {
+                    Execute(mode.Value, arguments, interactive);
+                }
+                catch (ReturnToModeSelectionException) when (interactive)
+                {
+                    logger.Information("Returning to mode selection.");
+                    requestedMode = null;
+                    continue;
+                }
+
+                logger.Information("The operation completed successfully.");
+
+                if (interactive)
+                    pausePresenter.WaitForExit();
+
+                return (Int32)ExitCode.Success;
             }
-
-            logger.Information($"Selected mode: {mode}.");
-            Execute(mode.Value);
-            logger.Information("The operation completed successfully.");
-
-            if (interactive)
-                pausePresenter.WaitForExit();
-
-            return (Int32)ExitCode.Success;
         }
         catch (CommandLineException exception)
         {
@@ -101,6 +133,11 @@ internal sealed class ToolsetApplication
         catch (InteractiveInputException exception)
         {
             logger.Error("Interactive input failed.", exception);
+            return ShowInputError(exception.Message, pauseOnExit);
+        }
+        catch (PreparationException exception)
+        {
+            logger.Error("Operation preparation failed.", exception);
             return ShowInputError(exception.Message, pauseOnExit);
         }
         catch (OperationCanceledException)
@@ -113,6 +150,11 @@ internal sealed class ToolsetApplication
             logger.Error("Installation discovery failed.", exception);
             return ShowExecutionError(exception.Message, pauseOnExit);
         }
+        catch (AnalysisExecutionException exception)
+        {
+            logger.Error("Analysis failed.", exception);
+            return ShowExecutionError(exception.Message, pauseOnExit);
+        }
         catch (Exception exception)
         {
             logger.Error("The operation failed.", exception);
@@ -120,13 +162,19 @@ internal sealed class ToolsetApplication
         }
     }
 
-    private void Execute(OperationMode mode)
+    private void Execute(OperationMode mode, ApplicationArguments arguments, Boolean interactive)
     {
         switch (mode)
         {
             case OperationMode.Installations:
                 InstallationsPlan plan = installationsPlanBuilder.Build();
                 installationsOperation.Execute(plan);
+                return;
+            case OperationMode.Analysis:
+                AnalysisPlan analysisPlan = analysisPlanBuilder.Build(
+                    arguments.Analysis ?? new AnalysisArguments(),
+                    interactive);
+                analysisOperation.ExecuteAsync(analysisPlan, interactive).GetAwaiter().GetResult();
                 return;
             default:
                 throw new InvalidOperationException($"Unsupported mode '{mode}'.");

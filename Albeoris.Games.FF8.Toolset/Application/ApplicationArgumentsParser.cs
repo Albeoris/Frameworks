@@ -8,19 +8,22 @@ internal sealed class ApplicationArgumentsParser
     public ApplicationArguments Parse(IReadOnlyList<String> arguments)
     {
         ArgumentNullException.ThrowIfNull(arguments);
-
         if (arguments.Count == 0)
             return new ApplicationArguments();
 
         if (IsHelpArgument(arguments[0]))
         {
-            EnsureNoAdditionalArguments(arguments);
+            if (arguments.Count > 1)
+                throw new CommandLineException("Help cannot be combined with other arguments.");
             return new ApplicationArguments { HelpRequested = true };
         }
 
         OperationMode mode = ParseMode(arguments[0]);
         Boolean nonInteractive = false;
         Boolean helpRequested = false;
+        String? gamePath = null;
+        String? outputPath = null;
+        String? tempPath = null;
 
         for (Int32 index = 1; index < arguments.Count; index++)
         {
@@ -35,8 +38,26 @@ internal sealed class ApplicationArgumentsParser
             {
                 if (nonInteractive)
                     throw new CommandLineException("--non-interactive was specified more than once.");
-
                 nonInteractive = true;
+                continue;
+            }
+
+            if (mode != OperationMode.Analysis)
+                throw new CommandLineException($"Unknown argument '{argument}'.");
+
+            if (IsOption(argument, "-gp", "--game-path"))
+            {
+                gamePath = ReadValue(arguments, ref index, "--game-path", gamePath);
+                continue;
+            }
+            if (IsOption(argument, "-o", "--output"))
+            {
+                outputPath = ReadValue(arguments, ref index, "--output", outputPath);
+                continue;
+            }
+            if (IsOption(argument, "-tp", "--temp-path"))
+            {
+                tempPath = ReadValue(arguments, ref index, "--temp-path", tempPath);
                 continue;
             }
 
@@ -48,6 +69,9 @@ internal sealed class ApplicationArgumentsParser
             Mode = mode,
             NonInteractive = nonInteractive,
             HelpRequested = helpRequested,
+            Analysis = mode == OperationMode.Analysis
+                ? new AnalysisArguments { GamePath = gamePath, OutputPath = outputPath, TempPath = tempPath }
+                : null,
         };
     }
 
@@ -67,26 +91,44 @@ internal sealed class ApplicationArgumentsParser
     {
         if (argument.Equals("installations", StringComparison.OrdinalIgnoreCase))
             return OperationMode.Installations;
-
+        if (argument.Equals("analysis", StringComparison.OrdinalIgnoreCase))
+            return OperationMode.Analysis;
         if (argument.StartsWith('-') || argument.StartsWith('/'))
             throw new CommandLineException("The first argument must be a mode.");
-
         throw new CommandLineException($"Unknown mode '{argument}'.");
     }
 
-    private static Boolean IsHelpArgument(String argument)
+    private static String ReadValue(
+        IReadOnlyList<String> arguments,
+        ref Int32 index,
+        String optionName,
+        String? currentValue)
     {
-        return HelpArguments.Contains(argument, StringComparer.OrdinalIgnoreCase);
+        if (currentValue is not null)
+            throw new CommandLineException($"{optionName} was specified more than once.");
+        if (++index >= arguments.Count || IsKnownOption(arguments[index]))
+            throw new CommandLineException($"{optionName} requires a value.");
+        if (String.IsNullOrWhiteSpace(arguments[index]))
+            throw new CommandLineException($"{optionName} cannot be empty.");
+        return arguments[index];
     }
 
-    private static Boolean IsNonInteractiveArgument(String argument)
+    private static Boolean IsKnownOption(String argument)
     {
-        return NonInteractiveArguments.Contains(argument, StringComparer.OrdinalIgnoreCase);
+        return IsHelpArgument(argument) || IsNonInteractiveArgument(argument) ||
+               IsOption(argument, "-gp", "--game-path") || IsOption(argument, "-o", "--output") ||
+               IsOption(argument, "-tp", "--temp-path");
     }
 
-    private static void EnsureNoAdditionalArguments(IReadOnlyList<String> arguments)
+    private static Boolean IsOption(String argument, String shortName, String fullName)
     {
-        if (arguments.Count > 1)
-            throw new CommandLineException("Help cannot be combined with other arguments.");
+        return argument.Equals(shortName, StringComparison.OrdinalIgnoreCase) ||
+               argument.Equals(fullName, StringComparison.OrdinalIgnoreCase);
     }
+
+    private static Boolean IsHelpArgument(String argument) =>
+        HelpArguments.Contains(argument, StringComparer.OrdinalIgnoreCase);
+
+    private static Boolean IsNonInteractiveArgument(String argument) =>
+        NonInteractiveArguments.Contains(argument, StringComparer.OrdinalIgnoreCase);
 }

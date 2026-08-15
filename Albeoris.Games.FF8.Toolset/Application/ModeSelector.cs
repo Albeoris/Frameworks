@@ -19,7 +19,8 @@ internal sealed class ModeSelector(IAnsiConsole console)
             .PageSize(5)
             .UseConverter(choice => choice.DisplayName)
             .AddChoices(
-                new ModeChoice("Installed Final Fantasy VIII releases", OperationMode.Installations),
+                new ModeChoice("Installed Games", OperationMode.Installations),
+                new ModeChoice("Analyze", OperationMode.Analysis),
                 new ModeChoice("Cancel", null));
 
         return console.Prompt(prompt).Mode;

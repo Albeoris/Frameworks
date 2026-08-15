@@ -10,10 +10,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Scriban" />
     <PackageReference Include="Spectre.Console" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Albeoris.Games.FF8.FlArchives\Albeoris.Games.FF8.FlArchives.csproj" />
+    <ProjectReference Include="..\Albeoris.Games.FF8.ZzzArchives\Albeoris.Games.FF8.ZzzArchives\Albeoris.Games.FF8.ZzzArchives.csproj" />
     <ProjectReference Include="..\Albeoris.Games.SteamLibrary\Albeoris.Games.SteamLibrary\Albeoris.Games.SteamLibrary.csproj" />
   </ItemGroup>
 

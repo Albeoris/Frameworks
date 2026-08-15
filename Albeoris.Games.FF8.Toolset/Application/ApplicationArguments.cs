@@ -7,4 +7,6 @@ internal sealed class ApplicationArguments
     public Boolean NonInteractive { get; init; }
 
     public Boolean HelpRequested { get; init; }
+
+    public AnalysisArguments? Analysis { get; init; }
 }
