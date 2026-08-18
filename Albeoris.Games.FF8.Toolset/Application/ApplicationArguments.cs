@@ -9,4 +9,6 @@ internal sealed class ApplicationArguments
     public Boolean HelpRequested { get; init; }
 
     public AnalysisArguments? Analysis { get; init; }
+
+    public ExtractArguments? Extract { get; init; }
 }

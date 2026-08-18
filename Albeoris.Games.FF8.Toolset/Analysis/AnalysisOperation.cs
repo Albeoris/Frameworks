@@ -15,7 +15,7 @@ internal sealed class AnalysisOperation(
     private readonly GameAnalyzer analyzer = analyzer ?? throw new ArgumentNullException(nameof(analyzer));
     private readonly AnalysisReportFormatterFactory formatterFactory =
         formatterFactory ?? throw new ArgumentNullException(nameof(formatterFactory));
-    private readonly AnalysisProgressPresenter progressPresenter = new(
+    private readonly OperationProgressPresenter progressPresenter = new(
         console ?? throw new ArgumentNullException(nameof(console)));
     private readonly TextWriter output = output ?? throw new ArgumentNullException(nameof(output));
     private readonly IApplicationLogger logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -30,10 +30,10 @@ internal sealed class AnalysisOperation(
         try
         {
             Boolean displayProgress = showProgress && !Console.IsOutputRedirected;
-            AnalysisProgressTracker? progress = displayProgress ? new AnalysisProgressTracker() : null;
+            OperationProgressTracker? progress = displayProgress ? new OperationProgressTracker() : null;
             Task<AnalysisReport> analysis = analyzer.AnalyzeAsync(plan, cancellationToken, progress);
             report = displayProgress
-                ? await progressPresenter.ShowUntilCompletedAsync(analysis, progress!, cancellationToken)
+                ? await progressPresenter.ShowUntilCompletedAsync("Analysis", analysis, progress!, cancellationToken)
                 : await analysis.ConfigureAwait(false);
         }
         catch (OperationCanceledException)

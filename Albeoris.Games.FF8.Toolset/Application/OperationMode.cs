@@ -4,4 +4,5 @@ internal enum OperationMode
 {
     Installations,
     Analysis,
+    Extract,
 }

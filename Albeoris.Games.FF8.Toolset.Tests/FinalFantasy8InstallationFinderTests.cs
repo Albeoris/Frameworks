@@ -23,7 +23,7 @@ public sealed class FinalFantasy8InstallationFinderTests : IDisposable
         File.WriteAllText(Path.Combine(installationPath, "FF8.exe"), String.Empty);
 
         StubInstallationSource firstSource = new(
-            new InstallationCandidate(FinalFantasy8Release.ClassicPc, installationPath),
+            new InstallationCandidate(FinalFantasy8Release.ClassicPC, installationPath),
             new InstallationCandidate(FinalFantasy8Release.Steam2013, emptyPath));
         StubInstallationSource secondSource = new(
             new InstallationCandidate(
@@ -36,7 +36,7 @@ public sealed class FinalFantasy8InstallationFinderTests : IDisposable
         IReadOnlyList<FinalFantasy8Installation> result = finder.FindInstalled();
 
         FinalFantasy8Installation installation = Assert.Single(result);
-        Assert.Equal(FinalFantasy8Release.ClassicPc, installation.Release);
+        Assert.Equal(FinalFantasy8Release.ClassicPC, installation.Release);
         Assert.Equal(installationPath, installation.Path);
     }
 

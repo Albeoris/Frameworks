@@ -78,4 +78,28 @@ public sealed class ApplicationArgumentsParserTests
 
         Assert.Equal("--game-path requires a value.", exception.Message);
     }
+
+    [Fact]
+    public void Parse_ExtractArguments_PreservesRepeatedArchivesAndMasks()
+    {
+        ApplicationArguments result = parser.Parse([
+            "extract", "-ga", "main.zzz", "--game-archive", "other.zzz",
+            "--output", "Files", "--mask", "*.bin;*.msd", "--recursive", "-ni"]);
+
+        Assert.Equal(OperationMode.Extract, result.Mode);
+        ExtractArguments extract = Assert.IsType<ExtractArguments>(result.Extract);
+        Assert.Equal(["main.zzz", "other.zzz"], extract.GameArchives);
+        Assert.Equal(["*.bin;*.msd"], extract.Masks);
+        Assert.True(extract.Recursive);
+        Assert.Equal("Files", extract.OutputPath);
+    }
+
+    [Fact]
+    public void Parse_ExtractConflictingRecursiveSwitches_ReportsConflict()
+    {
+        CommandLineException exception = Assert.Throws<CommandLineException>(() =>
+            parser.Parse(["extract", "--recursive", "--no-recursive"]));
+
+        Assert.Equal("Specify either --recursive or --no-recursive once.", exception.Message);
+    }
 }

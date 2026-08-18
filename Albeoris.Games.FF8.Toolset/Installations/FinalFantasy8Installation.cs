@@ -8,7 +8,7 @@ internal sealed class FinalFantasy8Installation(FinalFantasy8Release release, St
 
     public String ReleaseName => Release switch
     {
-        FinalFantasy8Release.ClassicPc => "PC (2000)",
+        FinalFantasy8Release.ClassicPC => "PC (2000)",
         FinalFantasy8Release.Steam2013 => "Steam (2013)",
         FinalFantasy8Release.SteamRemastered2019 => "Steam Remastered (2019)",
         _ => throw new InvalidOperationException($"Unsupported release '{Release}'."),

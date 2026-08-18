@@ -21,6 +21,7 @@ internal sealed class ModeSelector(IAnsiConsole console)
             .AddChoices(
                 new ModeChoice("Installed Games", OperationMode.Installations),
                 new ModeChoice("Analyze", OperationMode.Analysis),
+                new ModeChoice("Extract", OperationMode.Extract),
                 new ModeChoice("Cancel", null));
 
         return console.Prompt(prompt).Mode;

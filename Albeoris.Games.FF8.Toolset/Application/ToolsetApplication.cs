@@ -2,6 +2,7 @@ using Albeoris.Games.FF8.Toolset.Analysis;
 using Albeoris.Games.FF8.Toolset.Analysis.Reports;
 using Albeoris.Games.FF8.Toolset.Installations;
 using Albeoris.Games.FF8.Toolset.Infrastructure;
+using Albeoris.Games.FF8.Toolset.Extraction;
 using Spectre.Console;
 
 namespace Albeoris.Games.FF8.Toolset.Application;
@@ -15,6 +16,8 @@ internal sealed class ToolsetApplication
     private readonly InstallationsOperation installationsOperation;
     private readonly AnalysisPlanBuilder analysisPlanBuilder;
     private readonly AnalysisOperation analysisOperation;
+    private readonly ExtractionPlanBuilder extractionPlanBuilder;
+    private readonly ExtractionOperation extractionOperation;
     private readonly PausePresenter pausePresenter;
     private readonly IAnsiConsole console;
     private readonly IApplicationLogger logger;
@@ -27,6 +30,8 @@ internal sealed class ToolsetApplication
         InstallationsOperation installationsOperation,
         AnalysisPlanBuilder analysisPlanBuilder,
         AnalysisOperation analysisOperation,
+        ExtractionPlanBuilder extractionPlanBuilder,
+        ExtractionOperation extractionOperation,
         PausePresenter pausePresenter,
         IAnsiConsole console,
         IApplicationLogger logger)
@@ -38,6 +43,8 @@ internal sealed class ToolsetApplication
         this.installationsOperation = installationsOperation;
         this.analysisPlanBuilder = analysisPlanBuilder;
         this.analysisOperation = analysisOperation;
+        this.extractionPlanBuilder = extractionPlanBuilder;
+        this.extractionOperation = extractionOperation;
         this.pausePresenter = pausePresenter;
         this.console = console;
         this.logger = logger;
@@ -65,6 +72,8 @@ internal sealed class ToolsetApplication
             new InstallationsOperation(Console.Out, logger),
             new AnalysisPlanBuilder(new GamePathSelector(console, finder, dialogs), dialogs, logger),
             new AnalysisOperation(gameAnalyzer, new AnalysisReportFormatterFactory(), console, Console.Out, logger),
+            new ExtractionPlanBuilder(new ExtractSourceSelector(console, finder, dialogs), dialogs, console, logger),
+            new ExtractionOperation(new ArchiveExtractor(logger), console, Console.Out, logger),
             new PausePresenter(console),
             console,
             logger);
@@ -155,6 +164,11 @@ internal sealed class ToolsetApplication
             logger.Error("Analysis failed.", exception);
             return ShowExecutionError(exception.Message, pauseOnExit);
         }
+        catch (ExtractionExecutionException exception)
+        {
+            logger.Error("Extraction failed.", exception);
+            return ShowExecutionError(exception.Message, pauseOnExit);
+        }
         catch (Exception exception)
         {
             logger.Error("The operation failed.", exception);
@@ -175,6 +189,12 @@ internal sealed class ToolsetApplication
                     arguments.Analysis ?? new AnalysisArguments(),
                     interactive);
                 analysisOperation.ExecuteAsync(analysisPlan, interactive).GetAwaiter().GetResult();
+                return;
+            case OperationMode.Extract:
+                ExtractionPlan extractionPlan = extractionPlanBuilder.Build(
+                    arguments.Extract ?? new ExtractArguments(),
+                    interactive);
+                extractionOperation.ExecuteAsync(extractionPlan, interactive).GetAwaiter().GetResult();
                 return;
             default:
                 throw new InvalidOperationException($"Unsupported mode '{mode}'.");

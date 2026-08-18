@@ -33,7 +33,7 @@ internal sealed class ClassicRegistryInstallationSource(IApplicationLogger logge
                 continue;
 
             logger.Information($"Classic release registry candidate: {path}");
-            candidates.Add(new InstallationCandidate(FinalFantasy8Release.ClassicPc, path));
+            candidates.Add(new InstallationCandidate(FinalFantasy8Release.ClassicPC, path));
         }
 
         return candidates;

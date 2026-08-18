@@ -20,11 +20,11 @@ internal sealed class GameAnalyzer(
     public async Task<AnalysisReport> AnalyzeAsync(
         AnalysisPlan plan,
         CancellationToken cancellationToken = default,
-        AnalysisProgressTracker? progress = null)
+        OperationProgressTracker? progress = null)
     {
         ArgumentNullException.ThrowIfNull(plan);
         IReadOnlyList<ArchiveWorkItem> workItems = scanner.Find(plan.GamePath);
-        progress?.Initialize(workItems);
+        progress?.Initialize(workItems.Count);
         Int32 parallelism = Math.Max(Environment.ProcessorCount, 1);
         logger.Information($"Found {workItems.Count} top-level archive(s). Dataflow parallelism: {parallelism}.");
 
@@ -63,16 +63,16 @@ internal sealed class GameAnalyzer(
     private ArchiveAnalysis AnalyzeArchive(
         ArchiveWorkItem workItem,
         String tempPath,
-        AnalysisProgressTracker? progress)
+        OperationProgressTracker? progress)
     {
-        progress?.Start(workItem);
+        progress?.Start(workItem.Path, $"Analyzing {workItem.Kind.ToString().ToUpperInvariant()}");
         try
         {
             return archiveAnalyzer.Analyze(workItem, tempPath);
         }
         finally
         {
-            progress?.Complete(workItem);
+            progress?.Complete(workItem.Path);
         }
     }
 }
