@@ -56,7 +56,7 @@ public sealed class FF8Encoding : System.Text.Encoding
         ArgumentNullException.ThrowIfNull(fieldCharacterProvider);
 
         FF8Encoding encoding = CreateJapanese();
-        encoding.FieldCharacters = fieldCharacterProvider.Get(fieldName);
+        encoding.FieldCharacters = fieldCharacterProvider.TryGet(fieldName);
         return encoding;
     }
 
@@ -69,7 +69,7 @@ public sealed class FF8Encoding : System.Text.Encoding
         ArgumentNullException.ThrowIfNull(fieldCharacterProvider);
 
         FF8Encoding encoding = CreateJapanese();
-        encoding.FieldCharacters = fieldCharacterProvider.Get(fieldId);
+        encoding.FieldCharacters = fieldCharacterProvider.TryGet(fieldId);
         return encoding;
     }
 
