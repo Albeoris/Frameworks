@@ -1,9 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     </PropertyGroup>
@@ -11,6 +8,7 @@
     <ItemGroup>
         <ProjectReference Include="..\Albeoris.Games.FF8.TextEncoding\Albeoris.Games.FF8.TextEncoding.csproj" />
         <ProjectReference Include="..\Albeoris.Games.FF8.KernelBin.Abstractions\Albeoris.Games.FF8.KernelBin.Abstractions.csproj" />
+        <InternalsVisibleTo Include="Albeoris.Games.FF8.KernelBin.Tests" />
     </ItemGroup>
 
 </Project>
