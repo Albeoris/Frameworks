@@ -211,7 +211,6 @@ public class LZ4DecompressionStream : Stream
     /// <inheritdoc/>
     public override async Task<Int32> ReadAsync(Byte[] buffer, Int32 offset, Int32 count, CancellationToken cancellationToken)
     {
-        // Реализация аналогична синхронной, с использованием ReadAsync для чтения из _baseStream.
         if (buffer == null)
             throw new ArgumentNullException(nameof(buffer));
         if (offset < 0 || offset > buffer.Length)
