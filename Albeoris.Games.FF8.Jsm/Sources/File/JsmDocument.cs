@@ -42,7 +42,7 @@ public sealed class JsmDocument
         destination.Write(Write());
     }
 
-    internal static IReadOnlyList<JsmOperation> ReadOperations(Byte[] source)
+    public static IReadOnlyList<JsmOperation> ReadOperations(Byte[] source)
     {
         const Int32 operationsOffsetPosition = 6;
         if (source.Length < operationsOffsetPosition + sizeof(UInt16))
