@@ -22,6 +22,19 @@ public sealed class KeyIconTextEncodingTests
     [InlineData(0x62, nameof(TextTagKey.WindElement))]
     [InlineData(0x63, nameof(TextTagKey.WaterElement))]
     [InlineData(0x64, nameof(TextTagKey.HolyElement))]
+    [InlineData(0x65, nameof(TextTagKey.DeathStatus))]
+    [InlineData(0x66, nameof(TextTagKey.PoisonStatus))]
+    [InlineData(0x67, nameof(TextTagKey.PetrifyStatus))]
+    [InlineData(0x68, nameof(TextTagKey.DarknessStatus))]
+    [InlineData(0x69, nameof(TextTagKey.SilenceStatus))]
+    [InlineData(0x6A, nameof(TextTagKey.BerserkStatus))]
+    [InlineData(0x6B, nameof(TextTagKey.ZombieStatus))]
+    [InlineData(0x6C, nameof(TextTagKey.SleepStatus))]
+    [InlineData(0x6D, nameof(TextTagKey.SlowStatus))]
+    [InlineData(0x6E, nameof(TextTagKey.StopStatus))]
+    [InlineData(0x6F, nameof(TextTagKey.CurseStatus))]
+    [InlineData(0x70, nameof(TextTagKey.ConfuseStatus))]
+    [InlineData(0x71, nameof(TextTagKey.DrainStatus))]
     public void InlineIcon_DecodesToSemanticNameAndRoundTrips(Int32 parameter, String name)
     {
         FF8Encoding encoding = FF8Encoding.CreateEuropean();
@@ -31,6 +44,7 @@ public sealed class KeyIconTextEncodingTests
 
         Assert.Equal($"{{Key {name}}}", text);
         Assert.Equal(bytes, encoding.GetBytes(text));
+        Assert.Equal(bytes, encoding.GetBytes($"{{Key {parameter}}}"));
     }
 
     [Fact]
